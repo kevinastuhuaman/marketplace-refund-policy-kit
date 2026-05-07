@@ -1,0 +1,156 @@
+# marketplace-refund-policy-kit · default policy.yaml
+# Fork this file. Edit thresholds. Re-run the simulator + shadow-mode evaluator.
+# Schema docs: see src/engine/schema.ts (Zod) and tests/engine/schema.test.ts.
+
+version: 1
+
+metadata:
+  author: kevin-astuhuaman
+  last_calibrated: "2026-05-06"
+  notes: >-
+    Default kit policy. Five-tier evidence-led ladder. Thresholds are
+    placeholders; recalibrate against your shadow-mode results before enforcing.
+
+# 5-tier action ladder. Order matters: T1 = lightest touch, T5 = deny + appeal.
+tiers:
+  - id: T1
+    name: auto_approve
+    entry_conditions:
+      - { field: trust_score, op: gte, value: 0.85 }
+      - { field: cumulative_event_value_90d, op: lte, value: 100 }
+    action: auto_approve
+    sla_hours: 0
+    path_back:
+      condition: "remains in T1 absent new claims"
+      window_days: 90
+
+  - id: T2
+    name: standard
+    entry_conditions:
+      - { field: trust_score, op: between, value: [0.65, 0.85] }
+      - { field: claim_count_90d, op: lte, value: 1 }
+    action: auto_approve
+    sla_hours: 4
+    path_back:
+      condition: "two clean claims with valid evidence"
+      window_days: 60
+
+  - id: T3
+    name: evidence_required
+    entry_conditions:
+      - { field: risk_band, op: in, value: [medium, high] }
+      - { field: claim_count_90d, op: between, value: [2, 4] }
+    action: request_evidence
+    sla_hours: 48
+    path_back:
+      condition: "evidence accepted on next two claims"
+      window_days: 60
+
+  - id: T4
+    name: manual_review
+    entry_conditions:
+      - { field: risk_band, op: eq, value: high }
+      - { field: claim_count_90d, op: gte, value: 5 }
+    action: manual_review
+    sla_hours: 72
+    path_back:
+      condition: "reviewer-approved with hard evidence on next two claims"
+      window_days: 90
+
+  - id: T5
+    name: deny_with_appeal
+    entry_conditions:
+      - { field: risk_band, op: eq, value: critical }
+      - { field: cumulative_event_value_90d, op: gte, value: 1000 }
+    action: deny_with_appeal
+    sla_hours: 120
+    path_back:
+      condition: "successful appeal with corroborating third-party record"
+      window_days: 120
+
+# 4 evidence types x 4 risk bands. Cell value is a tier id.
+# Use "Tx -> Ty" to denote escalation on repeat trigger inside the path_back window.
+evidence_matrix:
+  evidence_types: [photo_visual, communication_log, third_party_record, none_provided]
+  risk_bands: [low, medium, high, critical]
+  cells:
+    photo_visual:
+      low: T1
+      medium: T2
+      high: T3
+      critical: T4 -> T5
+    communication_log:
+      low: T1
+      medium: T2
+      high: T3
+      critical: T4
+    third_party_record:
+      low: T1
+      medium: T1
+      high: T2
+      critical: T3
+    none_provided:
+      low: T2
+      medium: T3
+      high: T4
+      critical: T5
+
+# 5 guardrails. Each one is a kill-switch on a specific signal.
+guardrails:
+  - id: G1
+    label: appeal_overturn_rate
+    signal: appeal_overturn_pct_30d
+    threshold: ">20% over rolling 30 days"
+    owner: trust_ops
+    pause_action: halt_auto_approve
+
+  - id: G2
+    label: false_approve_rate
+    signal: shadow_false_approve_pct
+    threshold: ">1.5% over rolling 7 days"
+    owner: trust_ops
+    pause_action: halt_auto_approve
+
+  - id: G3
+    label: cold_start_denial_share
+    signal: pct_denials_to_low_tenure_entities
+    threshold: ">15% of denials hitting accounts <30 days old"
+    owner: product
+    pause_action: downshift_tier
+
+  - id: G4
+    label: review_queue_p90
+    signal: manual_review_p90_hours
+    threshold: ">72h sustained over rolling 7 days"
+    owner: ops
+    pause_action: page_oncall
+
+  - id: G5
+    label: post_refund_csat
+    signal: csat_drop_pct_30d
+    threshold: ">5pp drop vs. pre-launch baseline"
+    owner: cx
+    pause_action: freeze_rollout
+
+# 30 / 60 / 90 day rollout checkpoints.
+rollout:
+  - checkpoint: D30
+    target_metrics:
+      - shadow_mode_only
+      - tier_distribution_within_5pp_of_target
+      - guardrail_baselines_captured
+    owner_teams: [trust_ops, data, policy]
+
+  - checkpoint: D60
+    target_metrics:
+      - recovered_value_pct_of_recoverable_pool
+      - appeal_overturn_rate_lt_20
+      - sla_p90_hours_lt_72
+    owner_teams: [trust_ops, ops, policy]
+
+  - checkpoint: D90
+    target_metrics:
+      - sustained_recovery
+      - cold_start_denial_share_lt_15
+      - csat_within_2pp_of_baseline
+    owner_teams: [trust_ops, ops, cx, data]

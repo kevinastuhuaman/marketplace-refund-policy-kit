@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20, 22]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Run tests (engine, generator, scrub)
+        run: npm test
+
+      - name: Build production bundle
+        run: npm run build
+
+      - name: Generate synthetic dataset
+        run: npm run generate -- example-data/ci-claims.csv --n 100 --seed 7
+
+      - name: Smoke-test evaluator
+        run: npm run evaluate -- --policy policy.yaml --claims example-data/ci-claims.csv

@@ -1,0 +1,44 @@
+{
+  "name": "marketplace-refund-policy-kit",
+  "version": "0.1.0",
+  "type": "module",
+  "private": false,
+  "license": "MIT",
+  "description": "Ship a fair refund policy in days. Tier ladder + simulator + guardrails + shadow-mode evaluator.",
+  "author": "Kevin Astuhuaman",
+  "homepage": "https://github.com/kevinastuhuaman/marketplace-refund-policy-kit",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kevinastuhuaman/marketplace-refund-policy-kit.git"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --port 5173",
+    "evaluate": "tsx src/evaluator/cli.ts",
+    "generate": "tsx src/generator/cli.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.0",
+    "papaparse": "^5.4.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zod": "^3.23.8",
+    "zustand": "^4.5.5"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^22.5.5",
+    "@types/papaparse": "^5.3.14",
+    "@types/react": "^18.3.5",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.2",
+    "vite": "^5.4.6",
+    "vitest": "^2.1.1"
+  }
+}
