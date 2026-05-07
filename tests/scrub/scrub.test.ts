@@ -28,10 +28,12 @@ const FORBIDDEN: { label: string; pattern: RegExp }[] = [
   { label: 'ashby', pattern: /\bashby\b/i },
   { label: 'commerce s&o', pattern: /commerce\s*s&o/i },
   { label: 'whatnot_refund', pattern: /whatnot_refund/i },
-  { label: '22413', pattern: /\b22413\b/ },
-  { label: '11697', pattern: /\b11697\b/ },
-  { label: '10716', pattern: /\b10716\b/ },
-  { label: '2697', pattern: /\b2697\b/ },
+  // Numeric patterns: require digit boundaries that exclude decimal points,
+  // since synthetic data legitimately produces values like "2697.91".
+  { label: '22413', pattern: /(?<![0-9.])22413(?![0-9.])/ },
+  { label: '11697', pattern: /(?<![0-9.])11697(?![0-9.])/ },
+  { label: '10716', pattern: /(?<![0-9.])10716(?![0-9.])/ },
+  { label: '2697', pattern: /(?<![0-9.])2697(?![0-9.])/ },
   { label: 'b_a_*', pattern: /\bb_a_\d/i },
   { label: 'refund-policy.kevinastuhuaman', pattern: /refund-policy\.kevinastuhuaman/i },
 ];
