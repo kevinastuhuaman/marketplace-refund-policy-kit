@@ -104,37 +104,32 @@ function makeEntities(rng: () => number, count: number): EntityInit[] {
   return out;
 }
 
-// Zipf-ish allocation: top 20% of entities → ~55% of claims, bottom half → 1 claim each.
+// Zipf-ish allocation: top 20% of entities → ~55% of claims, long tail → 0 or 1.
+// Floor-and-distribute: counts start at floor(expected[i]) (no min-1), then we
+// distribute the rounding remainder via weighted random draws. Total always
+// equals totalClaims and the loop is bounded by `remaining`, so this cannot hang.
 function allocateClaimsPerEntity(
   rng: () => number,
   entities: EntityInit[],
   totalClaims: number,
 ): number[] {
   const n = entities.length;
-  // Generate a Zipf weight vector. Higher index = lower weight.
   const weights = entities.map((_, i) => 1 / Math.pow(i + 1, 1.4));
   const sumW = weights.reduce((s, w) => s + w, 0);
   const expected = weights.map((w) => (w * totalClaims) / sumW);
-  const counts = expected.map((e) => Math.max(1, Math.floor(e)));
+  const counts = expected.map((e) => Math.floor(e));
 
-  // Distribute the remainder using the rng so totals match `totalClaims`.
   let remaining = totalClaims - counts.reduce((s, c) => s + c, 0);
+  // Remaining is always in [0, n] because each floor() drops at most 1 from each entry.
+  const normalizedWeights = weights.map((w) => ({ weight: w / sumW }));
   while (remaining > 0) {
-    const idx = pickWeighted(
-      rng,
-      weights.map((w) => ({ weight: w / sumW })),
-    );
+    const idx = pickWeighted(rng, normalizedWeights);
     counts[idx] += 1;
     remaining -= 1;
   }
-  while (remaining < 0) {
-    // If we over-allocated due to floor + min-1, pull from the heaviest entity that still has > 1.
-    for (let i = 0; i < n && remaining < 0; i += 1) {
-      if (counts[i] > 1) {
-        counts[i] -= 1;
-        remaining += 1;
-      }
-    }
+  // Sanity: counts.length === n and sum === totalClaims by construction.
+  if (counts.length !== n) {
+    throw new Error(`bug: counts length ${counts.length} !== entity count ${n}`);
   }
   return counts;
 }

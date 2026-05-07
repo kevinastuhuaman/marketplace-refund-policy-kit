@@ -17,8 +17,8 @@
     "preview": "vite preview --port 5173",
     "evaluate": "tsx src/evaluator/cli.ts",
     "generate": "tsx src/generator/cli.ts",
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "test": "vitest run --pool=forks --no-isolate",
+    "test:watch": "vitest --pool=forks --no-isolate",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

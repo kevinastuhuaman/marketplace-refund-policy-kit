@@ -5,7 +5,7 @@ import { generateClaims } from '../../src/generator/claims';
 
 // Captured on first deterministic run. If you change the generator, regenerate
 // via: node --import tsx -e "import('./src/generator/claims').then(m=>console.log(require('crypto').createHash('sha256').update(require('papaparse').unparse(m.generateClaims({n:500,seed:42}),{header:true})+'\\n').digest('hex')))"
-const FROZEN_HASH_N500_SEED42 = '9c510d52489176800530e930d568144add8c48f5e1531ee7972b94cc2361d1f0';
+const FROZEN_HASH_N500_SEED42 = 'fdf37ae416bfb1a6b36d9497ba4baf189e74bb01393b5917b6997bc49b9cd793';
 
 function csvOf(rows: object[]): string {
   return `${Papa.unparse(rows, { header: true })}\n`;
