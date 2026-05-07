@@ -12,6 +12,14 @@
   <img src="https://img.shields.io/badge/MIT-License-FEE413?style=for-the-badge" alt="MIT">
 </p>
 
+<p align="center">
+  <a href="https://marketplace-refund-policy-kit.vercel.app"><strong>Live demo</strong></a>
+  &nbsp;·&nbsp;
+  <a href="policy.yaml"><strong>policy.yaml</strong></a>
+  &nbsp;·&nbsp;
+  <a href="src/engine">engine source</a>
+</p>
+
 A forkable refund-policy framework for any peer-to-peer marketplace. Edit one `policy.yaml` (5-tier ladder, 4×4 evidence matrix, guardrails, 30/60/90 rollout) and the interactive simulator + Node shadow-mode evaluator both pick up the change. No proprietary tier engine, no closed-source SaaS, no model that needs labeled fraud data on day one. Designed for the moment a Commerce / Trust team has telemetry but not enforcement, and needs to ship something defensible by Monday.
 
 ## What it does
